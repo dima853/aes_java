@@ -1,7 +1,6 @@
 package org.lessons;
 
 public class AES {
-    // AES S-box
     private static final int[] SBOX = {
             0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
             0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
@@ -21,7 +20,6 @@ public class AES {
             0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
     };
 
-    // Round constant
     private static final int[] RCON = {
             0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a,
             0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39,
@@ -52,36 +50,30 @@ public class AES {
         this.roundKeys = keyExpansion(key);
     }
 
-    // Key expansion
     private int[][] keyExpansion(byte[] key) {
         int[][] w = new int[4 * (ROUNDS + 1)][4];
 
-        // Copy the original key
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 w[i][j] = key[i * 4 + j] & 0xff;
             }
         }
 
-        // Expand the key
         for (int i = 4; i < 4 * (ROUNDS + 1); i++) {
             int[] temp = new int[4];
             System.arraycopy(w[i - 1], 0, temp, 0, 4);
 
             if (i % 4 == 0) {
-                // RotWord
                 int t = temp[0];
                 temp[0] = temp[1];
                 temp[1] = temp[2];
                 temp[2] = temp[3];
                 temp[3] = t;
 
-                // SubWord
                 for (int j = 0; j < 4; j++) {
                     temp[j] = SBOX[temp[j]];
                 }
 
-                // XOR with Rcon
                 temp[0] ^= RCON[i / 4];
             }
 
@@ -93,7 +85,6 @@ public class AES {
         return w;
     }
 
-    // Encrypt a single block (16 bytes)
     public byte[] encryptBlock(byte[] input) {
         if (input.length != BLOCK_SIZE) {
             throw new IllegalArgumentException("Input block must be 16 bytes");
@@ -101,17 +92,14 @@ public class AES {
 
         int[][] state = new int[4][4];
 
-        // Initialize state matrix
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 state[j][i] = input[i * 4 + j] & 0xff;
             }
         }
 
-        // Initial round
         addRoundKey(state, 0);
 
-        // Main rounds
         for (int round = 1; round < ROUNDS; round++) {
             subBytes(state);
             shiftRows(state);
@@ -119,12 +107,10 @@ public class AES {
             addRoundKey(state, round);
         }
 
-        // Final round
         subBytes(state);
         shiftRows(state);
         addRoundKey(state, ROUNDS);
 
-        // Convert state to output
         byte[] output = new byte[BLOCK_SIZE];
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
@@ -135,7 +121,6 @@ public class AES {
         return output;
     }
 
-    // SubBytes transformation
     private void subBytes(int[][] state) {
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
@@ -144,20 +129,16 @@ public class AES {
         }
     }
 
-    // ShiftRows transformation
     private void shiftRows(int[][] state) {
-        // Row 1: rotate left 1
         int temp = state[1][0];
         state[1][0] = state[1][1];
         state[1][1] = state[1][2];
         state[1][2] = state[1][3];
         state[1][3] = temp;
 
-        // Row 2: rotate left 2
         swap(state[2], 0, 2);
         swap(state[2], 1, 3);
 
-        // Row 3: rotate left 3 (or right 1)
         temp = state[3][3];
         state[3][3] = state[3][2];
         state[3][2] = state[3][1];
@@ -171,7 +152,6 @@ public class AES {
         arr[j] = temp;
     }
 
-    // MixColumns transformation
     private void mixColumns(int[][] state) {
         for (int i = 0; i < 4; i++) {
             int s0 = state[0][i];
@@ -186,7 +166,6 @@ public class AES {
         }
     }
 
-    // Galois Field multiplication
     private int multiply(int a, int b) {
         int result = 0;
         int highBit;
@@ -209,7 +188,6 @@ public class AES {
         return result & 0xff;
     }
 
-    // AddRoundKey transformation
     private void addRoundKey(int[][] state, int round) {
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
@@ -218,7 +196,6 @@ public class AES {
         }
     }
 
-    // Helper method to print bytes as hex
     public static String bytesToHex(byte[] bytes) {
         StringBuilder sb = new StringBuilder();
         for (byte b : bytes) {
@@ -228,7 +205,6 @@ public class AES {
     }
 
     public static void main(String[] args) {
-        // Example usage
         byte[] key = {
                 (byte)0x2b, (byte)0x7e, (byte)0x15, (byte)0x16,
                 (byte)0x28, (byte)0xae, (byte)0xd2, (byte)0xa6,
